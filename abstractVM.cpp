@@ -2,6 +2,7 @@
 #include <fstream>
 #include <vector>
 #include <algorithm>
+#include <list>
 
 void lexCom(std::vector<std::string> const &splited);
 
@@ -18,17 +19,12 @@ std::string instructions[]= {   "push",
                                 "print",
                                 "exit"
                             };
-void lexIns(std::vector<std::string> const &splited)
-{
-    if (std::find(std::begin(instructions), std::end(instructions),splited[0]) != std::end(instructions))
-        std::cout<<splited[0]<<std::endl;
-    else
-        lexCom(splited);
-}
 
-void lexCom(std::vector<std::string> const &splited)
+bool isInstruction(std::string const &splited)
 {
-    
+    if (std::find(std::begin(instructions), std::end(instructions), splited[0]) != std::end(instructions))
+        return true;
+    return false;
 }
 
 int split(std::vector<std::string>& vect, std::string str, char delim)
@@ -48,28 +44,45 @@ int split(std::vector<std::string>& vect, std::string str, char delim)
 	return vect.size();
 }
 
-void lexer(std::string line, int nbLine)
+std::vector<std::string> lexer(std::string line, int nbLine)
 {
     std::vector<std::string> splited;
+    std::vector<std::string> ret;
+
     int size = split(splited, line, ' ');
 
-    //for(int i = 0;i < size;i++)
-    //  std::cout<<splited[i]<<std::endl;
-    if (size <= 2)
-        lexIns(splited);
-    else
-        lexCom(splited);
+    if (splited[0][0] == ';')
+    {
+        ret[0] = "0";
+        ret[1] = line.substr(1);
+        return ret;
+    }
+        
+    if (isInstruction(splited[0]))
+    {
+        int cnt = 0;
 
+        ret[0] = "1";
+        ret[1] = splited[0];
+        while(splited[++cnt][0] != ';')
+            ret[cnt + 1] = splited[cnt];
+         return ret;
+    }
+    ret[0] = "-1";
+    ret[1] = splited[0];
 
+    return ret;
 }
 
 int	main(int ac, char **av)
 {
     std::string buff;
+    std::list< std::vector<std::string> > tokens;
+    std::list<int> errorInst;
 
     if (ac < 2)
     {
-            std::getline(std::cin, buff);
+        std::getline(std::cin, buff);
         while(buff != ";;")
         {
             lexer(buff, 0);
@@ -85,11 +98,13 @@ int	main(int ac, char **av)
             while (std::getline(is, buff))
             {
                 nbLine++;
-                lexer(buff, nbLine);
+                tokens.push_back(lexer(buff, nbLine));
             }
         }
         else
-            std::cout<<"The file doesn't exit";
+            std::cout<<"The file doesn't exit"<<std::endl;
     }
+    for(std::list< std::vector<std::string> >::iterator it = tokens.begin();it != tokens.end(); it++)
+        std::cout<< (*it)[0] <<std::endl;
 	return (0);
 }
